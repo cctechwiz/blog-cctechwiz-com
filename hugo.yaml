@@ -1,0 +1,24 @@
+baseURL: https://example.org/
+languageCode: en-us
+title: CCTechWiz
+
+theme: risotto
+
+params:
+  theme:
+    palette: "everforest"
+
+  about:
+    title: CCTechWiz
+    description: "Personal blog of Josh Maxwell, usually about DevX, DevOps, and generally tech related topics."
+
+  socialLinks:
+    - icon: "fa-brands fa-github"
+      title: "GitHub"
+      url: "https://github.com/cctechwiz"
+    - icon: "fa-brands fa-mastodon"
+      title: "Mastadon"
+      url: "https://fosstodon.org/@cctechwiz"
+    - icon: "fa-solid fa-envelope"
+      title: "Email"
+      url: "mailto:jmaxwell@cctechwiz.com"
