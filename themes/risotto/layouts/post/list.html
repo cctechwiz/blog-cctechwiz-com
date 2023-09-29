@@ -17,6 +17,21 @@
         <section class="post__summary">
             {{ .Summary }}
         </section>
+
+        <br>
+
+        {{ $taxonomy := "tags" }}
+        {{ with .GetTerms $taxonomy }}
+        <p>
+        {{ (site.GetPage $taxonomy).LinkTitle }}:
+        {{ range $k, $_ := . -}}
+        {{ if $k }}, {{ end }}
+        <a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a>
+        {{- end }}
+        </p>
+        {{ end }}
+
+        <hr>
     </article>
     {{ end }}
 {{ end }}

@@ -26,4 +26,14 @@
 	    On this page:
 	    {{ .TableOfContents }}
     {{ end }}
+
+    {{ $taxonomy := "tags" }}
+    {{ with .GetTerms $taxonomy }}
+    Tags:
+    <ul>
+      {{ range . }}
+      <li><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></li>
+      {{ end }}
+    </ul>
+    {{ end }}
 {{ end }}
