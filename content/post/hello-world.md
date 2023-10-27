@@ -6,8 +6,6 @@ draft = true
 tags = ["update"]
 +++
 
-My name is Josh Maxwell, this is my personal blog about my journey in DevX, DevOps, and Software Engineering. There will be other topics posted here as well I'm a hobby Homelabber and Game Developer and avid reader so I'll most likely discuss those things from time to time as well. Overall this will be a place for future Josh to reference back to the things I've learned, hopefully you can learn something too.
-
 ## Who is Josh Maxwell?
 
 Hi, I am Josh Maxwell, also known online as CCTechWiz.
@@ -20,7 +18,7 @@ Prior to Qualtrics, I worked as a Software Security Engineer at Sandia National 
 
 I have a Master's degree in Information Security (MSIS) from Carnegie Mellon University, with an emphasis in system-level code security, reverse engineering, and exploitation. I also have a Bachelor's degree in Computer Science from Southern Utah University. However, beyond my degrees, I have always had a deep craving for knowledge, to which I attribute the lion’s share of my most valuable experiences.
 
-I'm also more than just my profession. I am married to a strong, amazing woman and we have two beautiful daughters. My other interests and hobbies include; running and playing various tabletop RPGs, managing a small homelab, dabbling in indie game development, and mountain biking.
+I'm also more than just my profession. I am married to a strong, amazing woman and we have two beautiful daughters. My other interests and hobbies include; personal knowlege managment/productivity, running and playing various tabletop RPGs, managing a small homelab, dabbling in indie game development, reading, and mountain biking.
 
 
 ## Why did I Start this Blog?
