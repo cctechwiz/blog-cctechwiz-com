@@ -6,9 +6,9 @@ draft = true
 tags = ["update"]
 +++
 
-## Who is Josh Maxwell?
+## Who am I?
 
-Hi, I am Josh Maxwell, also known online as CCTechWiz.
+Hi, I am Josh Maxwell, also known online as CCTechWiz. My pronouns are he/him, I'm 6 feet tall with a bit of a dad bod and short brown hair that is usually spiked up when I'm not wearing a ball cap.
 
 I am working as a Senior Software Engineer and Tech Lead at Qualtrics on the Developer Experience and Tooling team. My current languages of choice are Go, Typescript, and Bash. I also have quite a bit of experience with C++, Python, C, and x86 Assembly.
 
