@@ -1,7 +1,7 @@
 +++
 title = 'Hello World'
 author = "Josh Maxwell"
-date = 2023-09-28T23:12:40-06:00
+date = 2023-10-30:22:40-07:00
 tags = ["update"]
 +++
 
