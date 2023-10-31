@@ -2,7 +2,6 @@
 title = 'Hello World'
 author = "Josh Maxwell"
 date = 2023-09-28T23:12:40-06:00
-draft = true
 tags = ["update"]
 +++
 
