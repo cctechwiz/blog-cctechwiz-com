@@ -1,0 +1,3 @@
+{{ range (where site.RegularPages "Section" "post" | first ( .Get "count" )) }}
+  <div><a href="{{ .Permalink }}">{{ .Title }}</a> - {{ .Date.Format "2 January 2006" }}</div>
+{{ end }}
