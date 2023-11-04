@@ -12,6 +12,10 @@ params:
     title: CCTechWiz
     description: "Personal blog of Josh Maxwell, usually about DevX, DevOps, and generally tech related topics."
 
+  author:
+    email: jmaxwell@cctechwiz.com
+    name: Josh Maxwell
+
   socialLinks:
     - icon: "fa-brands fa-github"
       title: "GitHub"
@@ -38,3 +42,5 @@ taxonomies:
   category: "categories"
   tag: "tags"
   series: "series"
+
+copyright: © 2023 Josh Maxwell

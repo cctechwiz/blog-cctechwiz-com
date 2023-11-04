@@ -2,7 +2,7 @@
 title: 'Hello World'
 author: "Josh Maxwell"
 date: 2023-10-30
-tags: ["update"]
+tags: ["updates"]
 ---
 
 ## Who am I?
@@ -67,7 +67,7 @@ Beyond these 3 core components, I will also be using this blog for;
 
 Thanks for sticking with me this far.
 
-If anything in this post has struck you as interesting feel free to follow me on Mastodon for notifications when I post new blogs, or follow the RSS feed.
+If anything in this post has struck you as interesting feel free to follow me on Mastodon for notifications when I post new blogs, or follow the [RSS feed](/index.xml).
 
 Until next time, be kind to yourself and others, and always keep learning.
 
