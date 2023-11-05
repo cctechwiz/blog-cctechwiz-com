@@ -9,13 +9,13 @@
         <header class="post__header">
             <h1><a href="{{ .Permalink }}">{{ .Title | markdownify }}</a></h1>
             <p class="post__meta">
-                {{ .Params.author }},
+                <a href="/authors/{{ .Params.author | urlize }}">{{ .Params.author }}</a>,
                 <span class="date">{{ .Date.Format "2 January 2006" }}</span>
             </p>
         </header>
 
         <section class="post__summary">
-            {{ .Summary }}
+            {{ .Summary }} ...
         </section>
 
         <br>

@@ -1,0 +1,4 @@
+{{ range where (where site.RegularPages "Section" "posts" ) "Params.author" "==" ( .Get "author" ) }}
+  <div><a href="{{ .Permalink }}">{{ .Title }}</a> - {{ .Date.Format "2 January 2006" }}</div>
+{{ end }}
+

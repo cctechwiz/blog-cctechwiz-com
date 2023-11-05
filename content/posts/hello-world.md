@@ -62,6 +62,8 @@ Beyond these 3 core components, I will also be using this blog for;
 
 [LinkedIn](https://www.linkedin.com/in/cctechwiz/) is where you can follow my professional journey and accomplishments, although I pretty much only used LinkedIn as an over-engineered CV.
 
+[GitHub](https://github.com/cctechwiz) is where you can find my code project and things I'm playing with. All code there comes with an as-is guarantee and I try to license it as permissive as I can.
+
 
 ## See You Soon!
 
