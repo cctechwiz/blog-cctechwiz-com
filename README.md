@@ -39,6 +39,8 @@ tags: ["updates", "book-club"]
 
 A tag is created the first time it's used, so there's nothing else to set up. Each one gets a page at `/tags/<tag>/`, and all of them are listed at `/tags/`.
 
+Each tag also has its own RSS feed at `/tags/<tag>/index.xml`, linked from its page.
+
 Use lowercase with hyphens so tags stay consistent. Tags display exactly as written, and `book-club` and `bookclub` would be two different tags.
 
 ## Series and collections
@@ -51,7 +53,7 @@ series: ["Book Club 2026"]
 
 A series is created the first time its name is used, so there's nothing else to set up.
 
-Each series gets a page at `/series/<series-name>/` (for example `/series/book-club-2026/`), and all of them are listed with their posts at `/series/`. Posts in a series link to it from their sidebar.
+Each series gets a page at `/series/<series-name>/` (for example `/series/book-club-2026/`), and all of them are listed with their posts at `/series/`. Posts in a series link to it from their sidebar. Each series also has its own RSS feed at `/series/<series-name>/index.xml`, linked from its page.
 
 Posts in a series are listed oldest first, so `date` controls their order. The Series tab in the top menu appears automatically once the first series exists. A post can have tags and a series at the same time.
 

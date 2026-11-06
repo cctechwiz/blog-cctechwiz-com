@@ -3,6 +3,7 @@
         <h1>{{ .Title | markdownify }}</h1>
         {{ .Content }}
     </header>
+    {{ partial "term-feed.html" . }}
 
     <ol>
         {{ range .Pages.ByDate }}

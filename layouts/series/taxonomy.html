@@ -7,6 +7,7 @@
     {{ range .Pages }}
     <section class="series">
         <h2><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
+        {{ partial "term-feed.html" . }}
         <ol>
             {{ range .Pages.ByDate }}
             <li><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a> - {{ .Date.Format "2 January 2006" }}</li>

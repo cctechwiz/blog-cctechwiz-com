@@ -1,0 +1,4 @@
+{{- $name := .LinkTitle -}}
+{{- with .OutputFormats.Get "rss" -}}
+<p class="term-feed"><a href="{{ .Permalink }}"><i class="fa-solid fa-rss" aria-hidden="true"></i> Subscribe to the {{ $name }} feed</a></p>
+{{- end -}}
