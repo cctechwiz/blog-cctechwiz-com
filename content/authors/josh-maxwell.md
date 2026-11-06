@@ -14,8 +14,6 @@ My personal mission is to multiply engineering impact through better tools, tigh
 
 Before Quantizr, I spent four years at Qualtrics, most recently as a Senior Software Engineer and Team Lead on the Common Engineering Toolkit team, building and operating the tools all engineers there relied on.
 
-Before Quantizr, I spent four years at Qualtrics, most recently as a Senior Software Engineer and Team Lead on the Common Engineering Toolkit team, building and operating the tools all engineers there relied on.
-
 Prior to Qualtrics, I worked as a Cyber Resiliency R&D Computer Engineer at Sandia National Laboratories. There I was focused on building applications and system integrations to support cyber resiliency R&D, experimentation, and execution.
 
 I have a Master's degree in Information Security (MSIS) from Carnegie Mellon University, with an emphasis in secure software development and exploitation. I also have a Bachelor's degree in Computer Science from Southern Utah University. However, beyond my degrees, I have always had a deep craving for knowledge, to which I attribute the lion’s share of my most valuable experiences.
