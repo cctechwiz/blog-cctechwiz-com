@@ -3,10 +3,6 @@ title: "Hello World"
 author: "Josh Maxwell"
 date: 2026-11-05
 tags: ["updates"]
-no-comments:
-  host: fosstodon.org
-  username: cctechwiz
-  id: 
 ---
 
 ## Who am I?

@@ -59,19 +59,7 @@ Posts in a series are listed oldest first, so `date` controls their order. The S
 
 ## Comments
 
-Comments on a post come from replies to a Mastodon toot, and they're off by default. A post has to be live before you can toot about it, so turn them on after publishing:
-
-1. Publish the post and toot a link to it.
-2. In the post's front matter, rename `no-comments` to `comments` and set `id` to the toot's ID (the number at the end of its URL):
-
-   ```yaml
-   comments:
-     host: fosstodon.org
-     username: cctechwiz
-     id: "123456789012345678"
-   ```
-
-3. Push to `main` again.
+Comments are currently removed from the site. See [COMMENTS.md](COMMENTS.md) for how to restore, update, and enable them.
 
 ## Where things go
 
