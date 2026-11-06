@@ -37,4 +37,13 @@
       {{ end }}
     </ul>
     {{ end }}
+
+    {{ with .GetTerms "series" }}
+    Series:
+    <ul>
+      {{ range . }}
+      <li><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></li>
+      {{ end }}
+    </ul>
+    {{ end }}
 {{ end }}

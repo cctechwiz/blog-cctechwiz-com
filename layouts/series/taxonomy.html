@@ -1,0 +1,17 @@
+{{ define "main" }}
+    <header class="content__header">
+        <h1>{{ .Title | markdownify }}</h1>
+        {{ .Content }}
+    </header>
+
+    {{ range .Pages }}
+    <section class="series">
+        <h2><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
+        <ol>
+            {{ range .Pages.ByDate }}
+            <li><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a> - {{ .Date.Format "2 January 2006" }}</li>
+            {{ end }}
+        </ol>
+    </section>
+    {{ end }}
+{{ end }}

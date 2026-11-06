@@ -14,7 +14,7 @@ params:
 
   about:
     title: CCTechWiz
-    description: "Personal blog of Josh Maxwell, usually about DevX, DevOps, and generally tech related topics."
+    description: "Exploring the craft of Engineering, from Security and DevX to DevOps and AI. A personal blog by Josh Maxwell."
 
   author:
     email: jmaxwell@cctechwiz.com
@@ -41,8 +41,13 @@ menu:
       name: "Tags"
       url: "/tags/"
       weight: 2
+    - identifier: "series"
+      name: "Series"
+      url: "/series/"
+      weight: 3
  
 taxonomies:
   tag: "tags"
+  series: "series"
 
-copyright: © 2023-2026 Josh Maxwell
+copyright: "© 2023-{year} Josh Maxwell"

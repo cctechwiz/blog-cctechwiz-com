@@ -1,0 +1,13 @@
+<nav class="page__nav main-nav">
+    <ul>
+      <li class="nomarker"><h1 class="page__logo"><a href="{{ .Site.BaseURL }}" class="page__logo-inner">{{ .Site.Title }}</a></h1></li>
+    {{ $currentPage := . }}
+    {{ range .Site.Menus.main }}
+    {{- /* Hide the Series tab until a series exists. */ -}}
+    {{ if or (ne .Identifier "series") site.Taxonomies.series }}
+    <li class="main-nav__item"><a class="nav-main-item{{ if or ($currentPage.IsMenuCurrent "main" .) ($currentPage.HasMenuCurrent "main" .) (eq ($currentPage.Permalink) (.URL | absLangURL)) }} active{{end}}" href="{{ .URL | absLangURL }}" title="{{ .Title }}">{{ .Name }}</a></li>
+    {{ end }}
+    {{ end }}
+    </ul>
+</nav>
+

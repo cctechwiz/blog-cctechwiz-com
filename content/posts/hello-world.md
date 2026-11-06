@@ -1,7 +1,7 @@
 ---
 title: "Hello World"
 author: "Josh Maxwell"
-date: 2023-10-30
+date: 2026-11-05
 tags: ["updates"]
 no-comments:
   host: fosstodon.org
@@ -28,7 +28,7 @@ I'm also more than just my profession. I am married to a strong, amazing woman a
 
 ## Why did I Start this Blog?
 
-As I mentioned, my mission is to improve developer experiences and productivity. I believe that to improve something you must first understand the fundamentals involved. I intend for this blog to be a medium for me to share my insights as I learn these fundamentals and explore how they can be used to improve developer experiences and productivity.
+As I mentioned, my mission is to multiply engineering impact. I believe that to improve something you must first understand the fundamentals involved. I intend for this blog to be a medium for me to share my insights as I learn these fundamentals and explore how they can be applied to the craft of Engineering.
 
 I also firmly believe that the best way to really learn something new is to do two things;
 
@@ -47,24 +47,24 @@ Teaching helps you realize there are gaps in your practical knowledge. When you 
 
 ## Where am I Going from Here?
 
-This blog will primarily be focused on three things;
+This blog will primarily be focused on four things;
 
-1. My personal experiences as I explore what creates good developer expeiences and improves productivity
-2. Tools and skills that are applicable to DevX
-3. Documenting other projects as I build and learn in public
+1. Security, from building security programs to securing the systems we ship
+2. DevX, and what creates good developer experiences and improves productivity
+3. DevOps, including the infrastructure and automation that let teams move fast without breaking things
+4. AI Engineering, and practical ways to integrate AI into our tools and workflows
 
-Beyond these 3 core components, I will also be using this blog for;
+Beyond these 4 core components, I will also be using this blog for;
 
-1. Taking public notes about things future me may want to look up later
-2. Publishing or cross-posting content from my work or other freelance jobs (as permitted of course)
-3. Improving my technical blog writing (please be patient with me as I learn)
+1. Documenting other projects as I build and learn in public
+2. Taking public notes about things future me may want to look up later
+3. Publishing or cross-posting content from my work or other freelance jobs (as permitted of course)
+4. Improving my technical blog writing (please be patient with me as I learn)
 
 
 ## Where else can you find Me?
 
 [Mastodon](https://fosstodon.org/@cctechwiz) is my primary social network account and where you can find my more raw thoughts in real-time, as well as blog notifications.
-
-[Gumroad](https://cctechwiz.gumroad.com/) is where I plan to make available more static/refined downloadable content, some free and some paid.
 
 [LinkedIn](https://www.linkedin.com/in/cctechwiz/) is where you can follow my professional journey and accomplishments, although I pretty much only used LinkedIn as an over-engineered CV.
 
