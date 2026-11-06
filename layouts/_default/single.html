@@ -1,0 +1,40 @@
+{{ define "main" }}
+    <header class="content__header">
+        <h1>{{ .Title | markdownify }}</h1>
+    </header>
+    <div class="content__body">
+        {{ .Content }}
+    </div>
+
+{{ partial "mastodon-comments.html" . }}
+
+    <footer class="content__footer"></footer>
+{{ end }}
+
+{{define "aside" }}
+    {{ with .Description }}<p>{{ . }}</p>{{ end }}
+    {{ if or (.Params.author) (.Params.date) }}
+        <p>
+            {{ if .Params.author }}
+            By <a href="/authors/{{ .Params.author | urlize }}">{{ .Params.author }}</a>
+            {{ end }}
+            {{ if .Date }}{{ .Date.Format "2006-01-02" }}{{ end }}
+        </p>
+    {{ end }}
+
+    {{ if and (.Params.toc) (.TableOfContents) }}
+	    <hr>
+	    On this page:
+	    {{ .TableOfContents }}
+    {{ end }}
+
+    {{ $taxonomy := "tags" }}
+    {{ with .GetTerms $taxonomy }}
+    Tags:
+    <ul>
+      {{ range . }}
+      <li><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></li>
+      {{ end }}
+    </ul>
+    {{ end }}
+{{ end }}

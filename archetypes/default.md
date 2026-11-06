@@ -1,6 +1,7 @@
 ---
-title: "{{ replace .File.ContentBaseName '-' ' ' | title }}"
-date: {{ .Date.Format 2006-01-02 }}
+title: "{{ replace .File.ContentBaseName "-" " " | title }}"
+author: "Josh Maxwell"
+date: {{ .Date }}
 tags: []
 no-comments:
   host: fosstodon.org
