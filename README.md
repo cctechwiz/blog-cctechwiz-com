@@ -8,7 +8,7 @@ Install Hugo (extended) and Go. The theme is a Hugo Module, so it downloads auto
 
 ```sh
 brew install hugo go
-hugo server -D    # preview at http://localhost:1313, including drafts
+hugo server -D    # preview at http://localhost:1313, -D includes drafts
 ```
 
 ## Add a new post
