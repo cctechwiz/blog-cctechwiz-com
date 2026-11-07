@@ -1,0 +1,12 @@
+{{- /* Sort orders are separate pages, because the CSP blocks JavaScript. */ -}}
+{{ if and .IsSection (eq .Section "books") }}
+{{ $current := .RelPermalink }}
+<nav class="page__nav main-nav book-tabs" aria-label="Sort books">
+    <ul>
+        {{ range slice (dict "name" "Date read" "url" "/books/") (dict "name" "Title" "url" "/books/by-title/") (dict "name" "Author" "url" "/books/by-author/") }}
+        {{ $url := .url | relURL }}
+        <li class="main-nav__item"><a class="nav-main-item{{ if eq $url $current }} active{{ end }}" href="{{ $url }}">{{ .name }}</a></li>
+        {{ end }}
+    </ul>
+</nav>
+{{ end }}

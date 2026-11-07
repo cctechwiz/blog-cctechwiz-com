@@ -7,24 +7,15 @@
     </div>
 
 
-    <footer class="content__footer"></footer>
+    <footer class="content__footer">
+        {{ partial "backlinks.html" . }}
+    </footer>
 {{ end }}
 
 {{define "aside" }}
     {{ with .Description }}<p>{{ . }}</p>{{ end }}
-    {{ if or (.Params.author) (.Params.date) }}
-        <p>
-            {{ if .Params.author }}
-            By <a href="/authors/{{ .Params.author | urlize }}">{{ .Params.author }}</a>
-            {{ end }}
-            {{ if .Date }}
-            <br>Published {{ .Date.Format "2006-01-02" }}
-            {{ if ne (.Lastmod.Format "2006-01-02") (.Date.Format "2006-01-02") }}
-            <br>Updated {{ .Lastmod.Format "2006-01-02" }}
-            {{ end }}
-            {{ end }}
-        </p>
-    {{ end }}
+    {{ if eq .Section "books" }}{{ partial "book-details.html" . }}{{ end }}
+    {{ partial "page-dates.html" . }}
 
     {{ if and (.Params.toc) (.TableOfContents) }}
 	    <hr>

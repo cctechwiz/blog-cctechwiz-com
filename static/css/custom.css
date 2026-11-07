@@ -2,3 +2,9 @@
 .align-left { text-align: left; }
 .align-center { text-align: center; }
 .align-right { text-align: right; }
+
+/* Puts the book sort tabs from layouts/partials/book-tabs.html on their own row under the main navigation. */
+.page__header { flex-wrap: wrap; }
+.book-tabs { flex-basis: 100%; margin-top: 0.5rem; }
+/* Room for the ./ marker, which would otherwise be clipped on phones. */
+.book-tabs ul { padding-left: 1.25rem; }

@@ -1,0 +1,22 @@
+{{- /* Paths come from data/backlinks.json. A page that isn't built, like a future-dated post, doesn't resolve and is skipped. */ -}}
+{{ $posts := slice }}
+{{ $others := slice }}
+{{ range index site.Data.backlinks (strings.TrimPrefix "/" .Path) }}
+  {{ with site.GetPage (printf "/%s" .) }}
+    {{ if and (eq .Section "posts") (eq .Kind "page") }}
+      {{ $posts = $posts | append . }}
+    {{ else }}
+      {{ $others = $others | append . }}
+    {{ end }}
+  {{ end }}
+{{ end }}
+{{ with (sort $posts "Date" "desc") | append (sort $others "Title") }}
+<section class="backlinks">
+    <h2>Mentioned in</h2>
+    <ul>
+        {{ range . }}
+        <li><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></li>
+        {{ end }}
+    </ul>
+</section>
+{{ end }}

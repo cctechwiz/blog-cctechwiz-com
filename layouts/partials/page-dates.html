@@ -1,0 +1,11 @@
+{{- /* Uses and Books have no date, so they only show Updated, after an edit. */ -}}
+{{ $published := "" }}
+{{ $updated := "" }}
+{{ if .Params.date }}{{ $published = .Date.Format "2006-01-02" }}{{ end }}
+{{ if .Params.lastmod }}{{ $updated = .Lastmod.Format "2006-01-02" }}{{ end }}
+{{ if or $published $updated }}
+<p>
+    {{ with $published }}Published {{ . }}{{ end }}
+    {{ if and $updated (ne $updated $published) }}{{ if $published }}<br>{{ end }}Updated {{ $updated }}{{ end }}
+</p>
+{{ end }}

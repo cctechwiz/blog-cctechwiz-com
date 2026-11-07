@@ -1,6 +1,5 @@
 ---
 title: "Hello World"
-author: "Josh Maxwell"
 date: 2026-11-05T12:00:00-07:00
 tags: ["updates"]
 ---

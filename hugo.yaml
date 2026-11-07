@@ -8,6 +8,11 @@ module:
 
 capitalizeListTitles: false
 
+# By default a page with no date uses lastmod, so Uses and Books would show
+# a Published line after their first edit.
+frontmatter:
+  date: ["date", "publishDate"]
+
 markup:
   highlight:
     noClasses: false
@@ -49,9 +54,24 @@ menu:
       name: "Series"
       url: "/series/"
       weight: 3
+    - identifier: "uses"
+      name: "Uses"
+      url: "/uses/"
+      weight: 4
+    - identifier: "books"
+      name: "Books"
+      url: "/books/"
+      weight: 5
  
 taxonomies:
   tag: "tags"
   series: "series"
+
+# Uses and Books stay out of feeds. Without this, Hugo writes empty index.xml
+# files for them, including under by-title and by-author.
+cascade:
+  - target:
+      path: "{/uses,/uses/**,/books,/books/**}"
+    outputs: [html]
 
 copyright: "© 2023-{year} Josh Maxwell"

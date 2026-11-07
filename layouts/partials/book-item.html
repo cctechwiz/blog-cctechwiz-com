@@ -1,0 +1,9 @@
+{{- /* Takes "page", and "showStatus" for the lists that aren't grouped by status. */ -}}
+{{ with .page }}
+<li>
+    <a href="{{ .RelPermalink }}">{{ .Title | markdownify }}</a> by {{ .Params.author }}
+    {{ if $.showStatus }}&middot; {{ .Params.status | humanize }}{{ end }}
+    {{ with .Params.dateRead }}&middot; {{ time.Format "2006-01-02" . }}{{ end }}
+    {{ with .Params.rating }}&middot; {{ partial "book-rating.html" . }}{{ end }}
+</li>
+{{ end }}

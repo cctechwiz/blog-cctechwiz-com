@@ -1,0 +1,25 @@
+{{ define "main" }}
+    <header class="content__header">
+        <h1>{{ .Title | markdownify }}</h1>
+    </header>
+    <div class="content__body">
+        {{ .Content }}
+        {{- /* The hub is hand-written. Without one, this keeps the pages reachable. */ -}}
+        {{ if not .RawContent }}
+        <ul>
+            {{ range .Pages.ByTitle }}
+            {{ .Render "li" }}
+            {{ end }}
+        </ul>
+        {{ end }}
+    </div>
+
+    <footer class="content__footer">
+        {{ partial "backlinks.html" . }}
+    </footer>
+{{ end }}
+
+{{define "aside" }}
+    {{ with .Description }}<p>{{ . }}</p>{{ end }}
+    {{ partial "page-dates.html" . }}
+{{ end }}

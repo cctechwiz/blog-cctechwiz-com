@@ -1,0 +1,6 @@
+<p>
+    By {{ .Params.author }}
+    <br>{{ .Params.status | humanize }}
+    {{ with .Params.dateRead }}<br>Read {{ time.Format "2006-01-02" . }}{{ end }}
+    {{ with .Params.rating }}<br>{{ partial "book-rating.html" . }}{{ end }}
+</p>

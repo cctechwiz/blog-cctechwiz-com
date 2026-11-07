@@ -1,0 +1,12 @@
+{{ define "main" }}
+    <header class="content__header">
+        <h1>{{ .Title | markdownify }}</h1>
+    </header>
+
+    {{- /* .Pages is empty on this subsection, because the books live in its parent. */ -}}
+    <ul>
+        {{ range sort (where site.RegularPages "Section" "books") "Params.titlesort" }}
+        {{ partial "book-item.html" (dict "page" . "showStatus" true) }}
+        {{ end }}
+    </ul>
+{{ end }}

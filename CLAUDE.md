@@ -6,7 +6,7 @@ Read `README.md` when adding posts, tags, or series, or updating the theme or Hu
 
 ## Posts
 
-- Posts live in the Obsidian vault at `~/Vaults/exocortex/Areas/Blog/`. `scripts/publish-from-vault` generates `content/posts/` and `static/images/posts/` from them, so make post edits in the vault.
+- Posts, Uses, and Books live in the Obsidian vault at `~/Vaults/exocortex/Areas/Blog/`, in `Posts/`, `Uses/`, and `Books/`. `scripts/publish-from-vault` generates `content/<section>/`, `static/images/<section>/`, and `data/backlinks.json` from them, so make those edits in the vault. `_index.md`, `by-title/`, and `by-author/` in `content/` are the exceptions: without a `_hub.md`, they're edited here.
 - The repo is public, so drafts stay in the vault.
 
 ## Deploying
@@ -34,7 +34,14 @@ Read `README.md` when adding posts, tags, or series, or updating the theme or Hu
 - `{year}` in the `copyright` setting is replaced in both `layouts/partials/footer.html` and `layouts/_default/rss.xml`. Change them together.
 - `params.about.description` must stay plain text because it's also the meta description. `layouts/partials/about.html` adds the author link at render time.
 - `capitalizeListTitles: false` keeps tags lowercase, which is why `content/tags/_index.md` and `content/series/_index.md` set their titles.
-- `layouts/partials/header.html` hides the Series tab until a series exists.
+- `layouts/partials/header.html` hides the Series, Uses, and Books tabs until they have content.
+- `author` means the author of a book. Posts have none. `params.author` in `hugo.yaml` stays for `rss.xml`, and `content/authors/josh-maxwell.md` stays for `layouts/partials/about.html`.
+- `frontmatter.date` in `hugo.yaml` drops Hugo's fallback to `lastmod`. Without it, Uses and Books get a `Published` line after their first edit, and `.Params.date` can't detect that because Hugo fills it in too.
+- `cascade` in `hugo.yaml` keeps Uses and Books out of feeds. A new section needs adding there and to `SECTIONS` in the script.
+- The book sort pages use `layout:` with `layouts/books/by-*.html`. Custom output formats don't work, because their `path` is a URL prefix. `.Pages` is empty on those subsections, so they list `where site.RegularPages "Section" "books"`.
+- `.page__header` is a flex row, so `static/css/custom.css` wraps it to put the book tabs on their own row.
+- `content/posts/_index.md` has `aliases` that notes can't set, so `hub_lines` in the script adds them if a `Posts/_hub.md` replaces that file.
+- Keys in `data/backlinks.json` are Hugo's `.Path` without the leading slash. `layouts/partials/backlinks.html` skips any that `site.GetPage` can't resolve, such as future-dated posts.
 - The CSP in `static/_headers` blocks inline styles. That's why `markup.highlight.noClasses` is false and `layouts/_default/_markup/render-table.html` exists. Previews load CSS from production, so `style-src` must keep `https://blog.cctechwiz.com`. `scripts/publish-from-vault` reads and updates `img-src`, so keep that directive on the `Content-Security-Policy` line.
 - Give post dates a time. A date alone means midnight UTC, which feed readers in US time zones show as the previous day.
 

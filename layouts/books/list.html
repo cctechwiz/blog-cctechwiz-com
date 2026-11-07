@@ -1,0 +1,32 @@
+{{ define "main" }}
+    <header class="content__header">
+        <h1>{{ .Title | markdownify }}</h1>
+        {{ .Content }}
+    </header>
+
+    {{ $books := sort (where site.RegularPages "Section" "books") "Params.titlesort" }}
+    {{ range slice
+        (dict "status" "reading" "heading" "Reading")
+        (dict "status" "finished" "heading" "Finished")
+        (dict "status" "did-not-finish" "heading" "Did not finish")
+        (dict "status" "to-be-read" "heading" "To be read")
+    }}
+    {{ $heading := .heading }}
+    {{ $group := where $books "Params.status" .status }}
+    {{ if eq .status "finished" }}{{ $group = sort $group "Params.dateread" "desc" }}{{ end }}
+    {{ with $group }}
+    <section>
+        <h2>{{ $heading }}</h2>
+        <ul>
+            {{ range . }}{{ partial "book-item.html" (dict "page" .) }}{{ end }}
+        </ul>
+    </section>
+    {{ end }}
+    {{ end }}
+
+    {{ partial "backlinks.html" . }}
+{{ end }}
+
+{{define "aside" }}
+    {{ with .Description }}<p>{{ . }}</p>{{ end }}
+{{ end }}
