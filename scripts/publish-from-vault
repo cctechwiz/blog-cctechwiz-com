@@ -10,6 +10,8 @@ Obsidian syntax Hugo can't render would be published as literal text, which
 can expose private note titles, so anything that can't be converted safely
 stops the run. Every note is checked before anything is written.
 
+Posts and images with no published note are kept unless --prune is given.
+
 This script never commits or pushes: pushing to main publishes the site.
 """
 
@@ -275,6 +277,7 @@ def render(note: Note, body: str, date: str) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Copy finished posts from the Obsidian vault into this site.")
     parser.add_argument("--check", action="store_true", help="report problems without writing anything")
+    parser.add_argument("--prune", action="store_true", help="delete posts and images that have no published note")
     parser.add_argument("--vault", type=Path, default=Path(DEFAULT_VAULT).expanduser(), help="path to the vault")
     parser.add_argument("--site", type=Path, default=Path(__file__).resolve().parent.parent, help="path to the Hugo site")
     args = parser.parse_args()
@@ -286,6 +289,11 @@ def main() -> int:
 
     notes = [note for path in sorted(blog.rglob("*.md")) if (note := parse_note(path))]
     published = [note for note in notes if note.is_published]
+    # No published notes at all means a wrong path or an unfinished sync, not a
+    # request to empty the site.
+    if args.prune and not published:
+        print(f"error: no published notes in {blog}, so nothing was pruned", file=sys.stderr)
+        return 1
     notes_by_name = {note.path.stem.lower(): note for note in notes}
     attachments = index_attachments(args.vault)
     posts = args.site / "content/posts"
@@ -328,11 +336,20 @@ def main() -> int:
 
     print(f"skipped   {len(notes) - len(published)} draft(s)")
 
-    # Removing a post is left to a person, since it changes the live site.
-    expected = {f"{note.slug}.md" for note in published} | {"_index.md"}
-    for path in sorted(posts.glob("*.md")):
-        if path.name not in expected:
-            print(f"warning: {path.name} has no published note. Delete it to take it off the site.")
+    # Removing a post changes the live site, so it only happens when asked for.
+    slugs_published = {note.slug for note in published}
+    stale_posts = [path for path in sorted(posts.glob("*.md")) if path.name != "_index.md" and path.stem not in slugs_published]
+    image_folders = sorted((args.site / "static/images/posts").glob("*"))
+    stale_images = [path for path in image_folders if path.is_dir() and path.name not in slugs_published]
+    for path in stale_posts + stale_images:
+        name = path.relative_to(args.site)
+        if not args.prune:
+            print(f"warning: {name} has no published note. Run with --prune to remove it.")
+        elif args.check:
+            print(f"would remove {name}")
+        else:
+            print(f"removed   {name}")
+            shutil.rmtree(path) if path.is_dir() else path.unlink()
     return 0
 
 

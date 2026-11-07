@@ -50,7 +50,31 @@ Anything else that wouldn't render stops the run before anything is written: lin
 
 ### Remove a post
 
-Set `draft: true` on the note or delete it, then delete `content/posts/<slug>.md` and `static/images/posts/<slug>/`. The script warns about posts that no longer have a published note, but never deletes them.
+Delete the note or set `draft: true`, then run:
+
+```sh
+scripts/publish-from-vault --prune    # add --check to see what would be removed
+```
+
+This deletes every post and image folder with no published note. Without `--prune`, the script only warns about them. It stops without deleting anything if it finds no published notes at all. Review the deletions in the diff before pushing.
+
+### Publish from iPhone
+
+[Working Copy](https://workingcopy.app/) holds the repo and [a-Shell](https://holzschu.github.io/a-Shell_iOS/) runs the script, so no Mac is needed.
+
+Set up once:
+
+1. Clone this repo in Working Copy. Pushing needs its paid unlock.
+2. In a-Shell, run `pickFolder` and choose the vault, then again for the repo in Working Copy. They become `~Exocortex` and `~blog-cctechwiz-com`.
+3. Create a Shortcut with Working Copy's Pull action, a-Shell's Execute Command action running the command below in the app, and Open App for Working Copy:
+
+   ```sh
+   cd ~blog-cctechwiz-com; python3 scripts/publish-from-vault --vault ~Exocortex
+   ```
+
+To publish, run the Shortcut, then review the diff and commit and push in Working Copy. If the diff is empty, check a-Shell, which shows any problems that stopped the run.
+
+Run `git pull` on the Mac before publishing from there. Otherwise, a post with a blank `date` gets a new date and conflicts with the phone's commit.
 
 ## Tags
 
