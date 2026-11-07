@@ -143,8 +143,16 @@ Comments are currently removed from the site. See [COMMENTS.md](COMMENTS.md) for
 | Scripts for the `Publish Blog` command | `Resources/Scripts/` in the vault: `Publish Blog.md` on iPhone, `Publish Blog Mac.md` on the Mac |
 | Template overrides | `layouts/`, using the same path as the theme file |
 | CSS, palette, images, favicon | `static/` |
+| Content Security Policy | `static/_headers` |
+| Syntax highlighting colors | `static/css/syntax.css`, generated with `hugo gen chromastyles --style=monokai` |
 
 Never edit the theme directly. To change a theme template, copy it into `layouts/` at the same path and edit that copy.
+
+## Analytics and CSP
+
+Visits are counted with Cloudflare Web Analytics, using the snippet in `layouts/partials/head.html`. Its token is `params.analytics.cloudflareToken` in `hugo.yaml`, and it's public by design. The beacon loads only in production builds, so `hugo server` doesn't add visits. The footer disclosure appears whenever the token is set.
+
+The CSP in `static/_headers` allows only the beacon, the Font Awesome stylesheet and fonts from cdnjs, and the site's own files. Inline styles and scripts are blocked. Anything new from another host, such as a remote image or an embed, needs adding there first.
 
 ## Updating
 

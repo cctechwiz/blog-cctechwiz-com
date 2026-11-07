@@ -1,0 +1,2 @@
+/*
+  Content-Security-Policy-Report-Only: default-src 'none'; script-src https://static.cloudflareinsights.com; connect-src https://cloudflareinsights.com; style-src 'self' https://blog.cctechwiz.com https://cdnjs.cloudflare.com; font-src https://cdnjs.cloudflare.com; img-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'

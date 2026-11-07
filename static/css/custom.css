@@ -1,0 +1,4 @@
+/* Table alignment classes from layouts/_default/_markup/render-table.html */
+.align-left { text-align: left; }
+.align-center { text-align: center; }
+.align-right { text-align: right; }

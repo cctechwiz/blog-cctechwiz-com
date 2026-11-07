@@ -35,5 +35,7 @@ Read `README.md` when adding posts, tags, or series, or updating the theme or Hu
 - `params.about.description` must stay plain text because it's also the meta description. `layouts/partials/about.html` adds the author link at render time.
 - `capitalizeListTitles: false` keeps tags lowercase, which is why `content/tags/_index.md` and `content/series/_index.md` set their titles.
 - `layouts/partials/header.html` hides the Series tab until a series exists.
+- The CSP in `static/_headers` blocks inline styles. That's why `markup.highlight.noClasses` is false and `layouts/_default/_markup/render-table.html` exists. Previews load CSS from production, so `style-src` must keep `https://blog.cctechwiz.com`.
+- `layouts/partials/footer.html` discloses Cloudflare Web Analytics. Update that text if analytics changes.
 - Give post dates a time. A date alone means midnight UTC, which feed readers in US time zones show as the previous day.
 
