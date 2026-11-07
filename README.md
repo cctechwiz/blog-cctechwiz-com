@@ -15,8 +15,8 @@ hugo server    # preview at http://localhost:1313
 
 Posts are written in Obsidian and copied here by a script. The vault is the source of truth, so edit posts there. Any edit made directly in `content/posts/` is overwritten by the next run.
 
-1. In the vault, create a note in `Areas/Blog/` and insert the `Blog Post` template.
-2. Set `slug`. It becomes the URL (`/posts/my-post-title/`) and stays put if you rename the note.
+1. In Obsidian, run `QuickAdd: New Blog Post` from the command palette and enter the title. This creates the note in `Areas/Blog/` from the `Blog Post` template.
+2. Check `slug`, which QuickAdd generates from the title. It becomes the URL (`/posts/my-post-title/`) and stays put if you rename the note.
 3. Write the post. Put `<!--more-->` on its own line where the summary on the posts page should end.
 4. Set `draft: false` when it's ready. Leave `date` blank to use the time of the first publish, or set it with a time.
 5. Copy it into this repo:
@@ -78,7 +78,22 @@ Set up once:
    cd ~blog-cctechwiz-com; python3 scripts/publish-from-vault --vault ~Exocortex
    ```
 
-To publish, run the Shortcut, then review the diff and commit and push in Working Copy. If the diff is empty, check a-Shell, which shows any problems that stopped the run.
+4. Optionally, add a command to start the Shortcut from Obsidian. In QuickAdd, create a Macro choice called `Publish Blog` with a User Script command set to `Resources/Scripts/Publish Blog.md`, then tap ⚡ to add it to the command palette. The `shortcut` value in that note must match the Shortcut's name.
+
+To publish, run `QuickAdd: Publish Blog` or the Shortcut, then review the diff and commit and push in Working Copy. If the diff is empty, check a-Shell, which shows any problems that stopped the run.
+
+QuickAdd choices don't sync, because Obsidian Sync's community plugin settings are off, so set them up on each device. `New Blog Post` uses:
+
+| Setting | Value |
+|---|---|
+| Type | Template |
+| Template Path | `Resources/Templates/Blog Post.md` |
+| File name | `{{VALUE:title}}` |
+| Create in folder | `Areas/Blog` |
+| Open | On |
+| ⚡ | On |
+
+The template's `{{VALUE:...}}` placeholders only work through QuickAdd, not the core Templates plugin.
 
 Run `git pull` on the Mac before publishing from there. Otherwise, a post with a blank `date` gets a new date and conflicts with the phone's commit.
 
@@ -125,6 +140,7 @@ Comments are currently removed from the site. See [COMMENTS.md](COMMENTS.md) for
 | Post images | `Resources/Attachments/` in the vault, copied to `static/images/posts/` |
 | Author page | `content/authors/josh-maxwell.md` |
 | Template for new posts | `Resources/Templates/Blog Post.md` in the vault |
+| Script for the `Publish Blog` command | `Resources/Scripts/Publish Blog.md` in the vault |
 | Template overrides | `layouts/`, using the same path as the theme file |
 | CSS, palette, images, favicon | `static/` |
 
