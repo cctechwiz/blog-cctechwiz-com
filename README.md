@@ -43,10 +43,11 @@ Drafts stay in the vault, because this repo is public. Only notes with `draft: f
 | `![[image.png\|description]]` | Same, with that text as the alt text. Without it, the alt text is empty |
 | `![[image.png\|300]]` | Same, at full size, because the width is dropped |
 | `[[Other Post]]` or `[[Other Post\|text]]` | Link to that post, if it's published |
+| `![alt](https://example.com/image.png)` | Left as it is, if the CSP allows that host. See [CSP](#csp) |
 
 Code blocks and inline code are left alone. Images are copied unchanged, so resize large ones first.
 
-Anything else that wouldn't render stops the run before anything is written: links to notes that aren't published posts, links to headings, note embeds, images that can't be found, callouts, highlights, and properties other than `title`, `author`, `date`, `tags`, `series`, and `description`.
+Anything else that wouldn't render stops the run before anything is written: links to notes that aren't published posts, links to headings, note embeds, images that can't be found, reference-style images, remote images the CSP doesn't allow, shortcodes other than `details`, `highlight`, `param`, `ref`, and `relref`, callouts, highlights, and properties other than `title`, `author`, `date`, `tags`, `series`, and `description`.
 
 ### Dates
 
@@ -150,7 +151,20 @@ Never edit the theme directly. To change a theme template, copy it into `layouts
 
 ## CSP
 
-The CSP in `static/_headers` allows only the Font Awesome stylesheet and fonts from cdnjs and the site's own stylesheets, images, and manifest. Scripts and inline styles are blocked. Anything new from another host, such as a remote image or an embed, needs adding there first.
+The CSP in `static/_headers` allows only the Font Awesome stylesheet and fonts from cdnjs and the site's own stylesheets, images, and manifest. Scripts and inline styles are blocked. Anything from another host needs adding there first.
+
+`scripts/publish-from-vault` checks posts against the policy:
+
+- **Remote images:** an `https` image from a host not in `img-src` stops the run. Saving the image in the vault is usually better, because a remote host can see readers' IP addresses and can change or remove the image. To allow the host anyway, run this from a terminal, then review the change to `static/_headers` in the diff. The `Publish Blog` command on the Mac doesn't pass this flag.
+
+  ```sh
+  scripts/publish-from-vault --update-csp    # add --check to see what would change
+  ```
+
+- **Unused hosts:** the script warns about hosts in `img-src` that no published post uses, and leaves them for you to remove.
+- **Embeds:** shortcodes such as `youtube` stop the run, and the flag doesn't change that, because they need more than a host added. To show a shortcode as text in a code block, write it as `{{</* name */>}}`.
+
+Tests for the script are in `scripts/test_publish_from_vault.py`. Run them with `python3 scripts/test_publish_from_vault.py`.
 
 ## Updating
 

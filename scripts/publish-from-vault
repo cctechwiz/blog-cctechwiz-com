@@ -12,6 +12,10 @@ stops the run. Every note is checked before anything is written.
 
 Posts and images with no published note are kept unless --prune is given.
 
+The site's Content Security Policy blocks anything it doesn't list, so a remote
+image from a new host stops the run. --update-csp adds that host to img-src in
+static/_headers. Shortcodes that embed other sites always stop the run.
+
 This script never commits or pushes: pushing to main publishes the site.
 """
 
@@ -28,12 +32,19 @@ from urllib.parse import unquote
 BLOG_FOLDER = "Areas/Blog"
 ATTACHMENT_FOLDER = "Resources/Attachments"
 DEFAULT_VAULT = "~/Vaults/exocortex"
+HEADERS_FILE = "static/_headers"
+# Cloudflare's limit for a line in _headers.
+MAX_HEADER_LINE = 2000
 
 # Passed through to Hugo. Anything else stops the run: Obsidian properties can
 # be private, and some mean something else to Hugo (`aliases` makes redirects).
 HUGO_KEYS = {"title", "author", "date", "tags", "series", "description"}
 # Used by this script and left out of the post.
 SCRIPT_KEYS = {"slug", "draft"}
+
+# Shortcodes that render nothing the CSP blocks. Others can add iframes, inline
+# styles, or remote images, so they stop the run.
+SAFE_SHORTCODES = {"details", "highlight", "param", "ref", "relref"}
 
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".avif"}
 
@@ -47,6 +58,13 @@ MARKDOWN_IMAGE = re.compile(r"!\[([^\]]*)\]\(([^)]+)\)")
 MARKDOWN_NOTE_LINK = re.compile(r"(?<!!)\[[^\]]*\]\(([^)\s]+\.md(?:#[^)\s]*)?)\)")
 CALLOUT = re.compile(r"\s*(?:>\s*)+\[!")
 HIGHLIGHT = re.compile(r"==[^=\s][^=]*==")
+REFERENCE_IMAGE = re.compile(r"!\[[^\]]*\]\[[^\]]*\]")
+# `{{</* name */>}}` is Hugo's escape for showing a shortcode as text.
+SHORTCODE = re.compile(r"\{\{[<%]\s*(?!/\*)/?\s*([^\s>%}]+)")
+REMOTE_URL = re.compile(r"[a-z][a-z0-9+.-]*://|//", re.IGNORECASE)
+HTTPS_HOST = re.compile(r"https://([^/?#]*)", re.IGNORECASE)
+PLAIN_HOST = re.compile(r"[a-z0-9.-]+(?::\d+)?\Z")
+IMG_SRC = re.compile(r"^[ \t]*Content-Security-Policy:.*?\bimg-src\b([^;\n]*)", re.IGNORECASE | re.MULTILINE)
 
 
 @dataclass
@@ -56,6 +74,8 @@ class Note:
     body: str
     body_start_line: int
     images: dict[Path, str] = field(default_factory=dict)
+    # Host of each remote image, and where it was first seen.
+    remote_hosts: dict[str, str] = field(default_factory=dict)
 
     def value(self, key: str) -> str:
         """Return a single-line property, without quotes."""
@@ -165,13 +185,25 @@ class Converter:
 
         if in_comment:
             self.problem("%% comment is never closed")
-        return "\n".join(output)
+        body = "\n".join(output)
+        self.check_shortcodes(body)
+        return body
+
+    def check_shortcodes(self, body: str) -> None:
+        # Hugo expands shortcodes inside code too, so this reads the whole body.
+        for match in SHORTCODE.finditer(body):
+            if match[1] not in SAFE_SHORTCODES:
+                self.problems.append(
+                    f"{self.note.path.name}: shortcode {match[1]!r} can't be published with the site's CSP: {match[0]}"
+                )
 
     def convert_prose(self, text: str) -> str:
         for match in MARKDOWN_NOTE_LINK.finditer(text):
             self.problem(f"link to a vault note: {match[0]}")
         for match in HIGHLIGHT.finditer(text):
             self.problem(f"highlight has no Hugo equivalent: {match[0]}")
+        for match in REFERENCE_IMAGE.finditer(text):
+            self.problem(f"reference-style images aren't supported: {match[0]}")
         text = MARKDOWN_IMAGE.sub(self.convert_markdown_image, text)
         return WIKILINK.sub(self.convert_wikilink, text)
 
@@ -205,9 +237,20 @@ class Converter:
 
     def convert_markdown_image(self, match: re.Match) -> str:
         target = match[2].strip().split(" ", 1)[0]
-        if re.match(r"https?://|/", target):
+        if REMOTE_URL.match(target):
+            return self.remote_image(target, match[0])
+        if target.startswith("/"):
             return match[0]
         return self.image(unquote(target), match[1], match[0])
+
+    def remote_image(self, target: str, original: str) -> str:
+        url = HTTPS_HOST.match(target)
+        host = url[1].lower() if url else ""
+        if PLAIN_HOST.match(host):
+            self.note.remote_hosts.setdefault(host, f"{self.note.path.name}:{self.line_number}")
+        else:
+            self.problem(f"remote images need an https URL with a plain host name: {original}")
+        return original
 
     def image(self, target: str, alt: str, original: str) -> str:
         source = self.find_attachment(target, original)
@@ -262,6 +305,19 @@ def check_frontmatter(note: Note, slugs: dict[str, Path], problems: list[str]) -
         problems.append(f"{name}: property {key!r} isn't allowed in a post")
 
 
+def allowed_image_hosts(headers: str) -> list[str] | None:
+    """Return the hosts in img-src, or None if the CSP has no img-src."""
+    match = IMG_SRC.search(headers)
+    if not match:
+        return None
+    return [source.removeprefix("https://") for source in match[1].split() if source.startswith("https://")]
+
+
+def add_image_hosts(headers: str, hosts: list[str]) -> str:
+    end = IMG_SRC.search(headers).end(1)
+    return headers[:end] + "".join(f" https://{host}" for host in hosts) + headers[end:]
+
+
 def render(note: Note, body: str, date: str, lastmod: str) -> str:
     dates = [f"date: {date}"] + ([f"lastmod: {lastmod}"] if lastmod else [])
     lines = ["---"]
@@ -309,6 +365,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Copy finished posts from the Obsidian vault into this site.")
     parser.add_argument("--check", action="store_true", help="report problems without writing anything")
     parser.add_argument("--prune", action="store_true", help="delete posts and images that have no published note")
+    parser.add_argument("--update-csp", action="store_true", help=f"allow new remote image hosts in {HEADERS_FILE}")
     parser.add_argument("--vault", type=Path, default=Path(DEFAULT_VAULT).expanduser(), help="path to the vault")
     parser.add_argument("--site", type=Path, default=Path(__file__).resolve().parent.parent, help="path to the Hugo site")
     args = parser.parse_args()
@@ -348,6 +405,29 @@ def main() -> int:
             lastmod = now
         outputs.append((note, render(note, body, date, lastmod)))
 
+    headers_path = args.site / HEADERS_FILE
+    headers = headers_path.read_text(encoding="utf-8") if headers_path.is_file() else ""
+    allowed = allowed_image_hosts(headers)
+    remote_hosts: dict[str, str] = {}
+    for note, _ in outputs:
+        for host, seen_at in note.remote_hosts.items():
+            remote_hosts.setdefault(host, seen_at)
+    new_hosts = sorted(remote_hosts.keys() - set(allowed or []))
+
+    new_headers = None
+    if new_hosts and allowed is None:
+        problems.append(f"{HEADERS_FILE}: the Content-Security-Policy has no img-src to check remote images against")
+    elif new_hosts and not args.update_csp:
+        for host in new_hosts:
+            problems.append(
+                f"{remote_hosts[host]}: the CSP blocks images from {host}. "
+                "Save the image in the vault, or rerun with --update-csp to allow that host."
+            )
+    elif new_hosts:
+        new_headers = add_image_hosts(headers, new_hosts)
+        if any(len(line) > MAX_HEADER_LINE for line in new_headers.splitlines()):
+            problems.append(f"{HEADERS_FILE}: adding {', '.join(new_hosts)} would pass Cloudflare's {MAX_HEADER_LINE} character line limit")
+
     if problems:
         print(f"Nothing was written. Fix {len(problems)} problem(s):", file=sys.stderr)
         for problem in problems:
@@ -369,6 +449,14 @@ def main() -> int:
                 shutil.copy2(source, images / name)
 
     print(f"skipped   {len(notes) - len(published)} draft(s)")
+
+    if new_headers:
+        for host in new_hosts:
+            print(f"{'would add' if args.check else 'added    '} https://{host} to img-src in {HEADERS_FILE}")
+        if not args.check:
+            headers_path.write_text(new_headers, encoding="utf-8")
+    for host in sorted(set(allowed or []) - remote_hosts.keys()):
+        print(f"warning: no published post uses https://{host}, which img-src in {HEADERS_FILE} still allows.")
 
     # Removing a post changes the live site, so it only happens when asked for.
     slugs_published = {note.slug for note in published}
