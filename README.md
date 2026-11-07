@@ -19,7 +19,7 @@ Posts are written in Obsidian and copied here by a script. The vault is the sour
 2. Check `slug`, which QuickAdd generates from the title. It becomes the URL (`/posts/my-post-title/`) and stays put if you rename the note.
 3. Write the post. Put `<!--more-->` on its own line where the summary on the posts page should end.
 4. Set `draft: false` when it's ready. Leave `date` blank to use the time of the first publish, or set it with a time.
-5. Copy it into this repo:
+5. Copy it into this repo by running `QuickAdd: Publish Blog` in Obsidian, or from a terminal:
 
    ```sh
    scripts/publish-from-vault          # add --check to see problems without writing anything
@@ -82,7 +82,7 @@ Set up once:
 
 To publish, run `QuickAdd: Publish Blog` or the Shortcut, then review the diff and commit and push in Working Copy. If the diff is empty, check a-Shell, which shows any problems that stopped the run.
 
-QuickAdd choices don't sync, because Obsidian Sync's community plugin settings are off, so set them up on each device. `New Blog Post` uses:
+QuickAdd choices don't sync, because Obsidian Sync's community plugin settings are off, so set them up on each device. On the Mac, `Publish Blog` is a Macro choice with a User Script command set to `Resources/Scripts/Publish Blog Mac.md`. It runs the script and shows the result in a notice, without pulling or pushing. `New Blog Post` uses:
 
 | Setting | Value |
 |---|---|
@@ -140,7 +140,7 @@ Comments are currently removed from the site. See [COMMENTS.md](COMMENTS.md) for
 | Post images | `Resources/Attachments/` in the vault, copied to `static/images/posts/` |
 | Author page | `content/authors/josh-maxwell.md` |
 | Template for new posts | `Resources/Templates/Blog Post.md` in the vault |
-| Script for the `Publish Blog` command | `Resources/Scripts/Publish Blog.md` in the vault |
+| Scripts for the `Publish Blog` command | `Resources/Scripts/` in the vault: `Publish Blog.md` on iPhone, `Publish Blog Mac.md` on the Mac |
 | Template overrides | `layouts/`, using the same path as the theme file |
 | CSS, palette, images, favicon | `static/` |
 
