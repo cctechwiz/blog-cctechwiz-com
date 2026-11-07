@@ -16,6 +16,7 @@ This script never commits or pushes: pushing to main publishes the site.
 """
 
 import argparse
+import filecmp
 import re
 import shutil
 import sys
@@ -261,17 +262,47 @@ def check_frontmatter(note: Note, slugs: dict[str, Path], problems: list[str]) -
         problems.append(f"{name}: property {key!r} isn't allowed in a post")
 
 
-def render(note: Note, body: str, date: str) -> str:
+def render(note: Note, body: str, date: str, lastmod: str) -> str:
+    dates = [f"date: {date}"] + ([f"lastmod: {lastmod}"] if lastmod else [])
     lines = ["---"]
     for key, field_lines in note.fields.items():
         if key == "date":
-            lines.append(f"date: {date}")
+            lines.extend(dates)
         elif key not in SCRIPT_KEYS:
             lines.extend(field_lines)
     if "date" not in note.fields:
-        lines.append(f"date: {date}")
+        lines.extend(dates)
     lines.append("---")
     return "\n".join(lines) + "\n" + body
+
+
+def properties(note: Note) -> dict[str, str]:
+    """Return a note's published properties, ignoring how they're formatted.
+
+    Obsidian rewrites frontmatter, such as removing quotes or turning
+    `tags: ["a"]` into a list, and that isn't a change to the post.
+    """
+    ignored = SCRIPT_KEYS | {"date", "lastmod"}
+    return {
+        key: re.sub(r"[\s\"'\[\],-]", "", "".join(lines))
+        for key, lines in note.fields.items()
+        if key not in ignored
+    }
+
+
+def images_changed(note: Note, folder: Path) -> bool:
+    current = {path.name for path in folder.glob("*")}
+    if current != set(note.images.values()):
+        return True
+    return any(not filecmp.cmp(source, folder / name, shallow=False) for source, name in note.images.items())
+
+
+def is_updated(note: Note, body: str, existing: Note, folder: Path) -> bool:
+    return (
+        existing.body.strip() != body.strip()
+        or properties(existing) != properties(note)
+        or images_changed(note, folder)
+    )
 
 
 def main() -> int:
@@ -307,12 +338,15 @@ def main() -> int:
         check_frontmatter(note, slugs, problems)
         body = Converter(note, notes_by_name, attachments, problems).convert()
 
-        # Blank means "the first time this was published", so keep that date.
-        date = note.value("date")
         current = posts / f"{note.slug}.md"
-        if not date and current.is_file() and (existing := parse_note(current)):
-            date = existing.value("date")
-        outputs.append((note, render(note, body, date or now)))
+        existing = parse_note(current) if current.is_file() else None
+
+        # Blank means "the first time this was published", so keep that date.
+        date = note.value("date") or (existing.value("date") if existing else "") or now
+        lastmod = existing.value("lastmod") if existing else ""
+        if existing and is_updated(note, body, existing, args.site / "static/images/posts" / note.slug):
+            lastmod = now
+        outputs.append((note, render(note, body, date, lastmod)))
 
     if problems:
         print(f"Nothing was written. Fix {len(problems)} problem(s):", file=sys.stderr)

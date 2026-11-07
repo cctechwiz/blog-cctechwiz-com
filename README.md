@@ -48,6 +48,12 @@ Code blocks and inline code are left alone. Images are copied unchanged, so resi
 
 Anything else that wouldn't render stops the run before anything is written: links to notes that aren't published posts, links to headings, note embeds, images that can't be found, callouts, highlights, and properties other than `title`, `author`, `date`, `tags`, `series`, and `description`.
 
+### Dates
+
+The script sets `date` on the first publish and keeps it after that, unless the note sets its own. It sets `lastmod` when a later run finds the post's text, properties, or images have changed, and leaves it alone if they haven't. Reformatted frontmatter doesn't count as a change.
+
+Both dates exist only in `content/posts/`, because the script doesn't write to the vault. The post sidebar shows `Published`, and `Updated` when `lastmod` falls on a different day. The posts list and RSS keep the published date, so an edit doesn't resurface a post in feed readers.
+
 ### Remove a post
 
 Delete the note or set `draft: true`, then run:
