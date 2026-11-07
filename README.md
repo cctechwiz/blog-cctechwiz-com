@@ -8,26 +8,49 @@ Install Hugo (extended) and Go. The theme is a Hugo Module, so it downloads auto
 
 ```sh
 brew install hugo go
-hugo server -D    # preview at http://localhost:1313, -D includes drafts
+hugo server    # preview at http://localhost:1313
 ```
 
 ## Add a new post
 
-1. Create the post. It starts as a draft, with the author and date filled in:
+Posts are written in Obsidian and copied here by a script. The vault is the source of truth, so edit posts there. Any edit made directly in `content/posts/` is overwritten by the next run.
+
+1. In the vault, create a note in `Areas/Blog/` and insert the `Blog Post` template.
+2. Set `slug`. It becomes the URL (`/posts/my-post-title/`) and stays put if you rename the note.
+3. Write the post. Put `<!--more-->` on its own line where the summary on the posts page should end.
+4. Set `draft: false` when it's ready. Leave `date` blank to use the time of the first publish, or set it with a time.
+5. Copy it into this repo:
 
    ```sh
-   hugo new content posts/my-post-title.md
+   scripts/publish-from-vault          # add --check to see problems without writing anything
    ```
 
-2. Write it in `content/posts/my-post-title.md`. The file name becomes the URL (`/posts/my-post-title/`).
-3. Put `<!--more-->` on its own line where the summary on the posts page should end.
-4. Preview it with `hugo server -D`.
-5. Delete `draft: true` when it's ready.
-6. Publish it:
+6. Preview it with `hugo server`, and review the changes with `git status` and `git diff`.
+7. Publish it:
    - Push to `main` to publish right away.
    - Push to any other branch to get a preview at `https://<branch-name>.blog-cctechwiz-com.pages.dev`. Styles and some links on previews point at the live site.
 
 A post dated in the future won't appear until a build runs after that date.
+
+### What the script converts
+
+Drafts stay in the vault, because this repo is public. Only notes with `draft: false` are copied.
+
+| In the note | In the post |
+|---|---|
+| `%%comment%%` | Removed |
+| `![[image.png]]` or `![alt](path/to/image.png)` | Image copied to `static/images/posts/<slug>/` with a web-safe name |
+| `![[image.png\|description]]` | Same, with that text as the alt text. Without it, the alt text is empty |
+| `![[image.png\|300]]` | Same, at full size, because the width is dropped |
+| `[[Other Post]]` or `[[Other Post\|text]]` | Link to that post, if it's published |
+
+Code blocks and inline code are left alone. Images are copied unchanged, so resize large ones first.
+
+Anything else that wouldn't render stops the run before anything is written: links to notes that aren't published posts, links to headings, note embeds, images that can't be found, callouts, highlights, and properties other than `title`, `author`, `date`, `tags`, `series`, and `description`.
+
+### Remove a post
+
+Set `draft: true` on the note or delete it, then delete `content/posts/<slug>.md` and `static/images/posts/<slug>/`. The script warns about posts that no longer have a published note, but never deletes them.
 
 ## Tags
 
@@ -45,7 +68,7 @@ Use lowercase with hyphens so tags stay consistent. Tags display exactly as writ
 
 ## Series and collections
 
-A series groups related posts that belong together, like a multi-part guide or a reading list. New posts start with an empty `series: []`, which you can leave as is for a standalone post. To add a post to a series, set the series name, using exactly the same name on every post in it:
+A series groups related posts that belong together, like a multi-part guide or a reading list. The template starts with an empty `series: []`, which you can leave as is for a standalone post. To add a post to a series, set the series name, using exactly the same name on every post in it:
 
 ```yaml
 series: ["Book Club 2026"]
@@ -68,9 +91,10 @@ Comments are currently removed from the site. See [COMMENTS.md](COMMENTS.md) for
 | What | Where |
 |---|---|
 | Site settings, menu, social links, tagline | `hugo.yaml` |
-| Posts | `content/posts/` |
+| Posts | `Areas/Blog/` in the Obsidian vault, copied to `content/posts/` |
+| Post images | `Resources/Attachments/` in the vault, copied to `static/images/posts/` |
 | Author page | `content/authors/josh-maxwell.md` |
-| Template for new posts | `archetypes/default.md` |
+| Template for new posts | `Resources/Templates/Blog Post.md` in the vault |
 | Template overrides | `layouts/`, using the same path as the theme file |
 | CSS, palette, images, favicon | `static/` |
 

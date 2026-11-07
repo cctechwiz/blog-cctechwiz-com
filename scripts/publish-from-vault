@@ -1,0 +1,340 @@
+#!/usr/bin/env python3
+"""Copy finished posts from the Obsidian vault into this Hugo site.
+
+The vault is the source of truth and is only ever read. Notes in Areas/Blog/
+with `draft: false` become content/posts/<slug>.md, and their embedded images
+go to static/images/posts/<slug>/. Other notes are skipped, because the repo
+is public and anything pushed to it can be read.
+
+Obsidian syntax Hugo can't render would be published as literal text, which
+can expose private note titles, so anything that can't be converted safely
+stops the run. Every note is checked before anything is written.
+
+This script never commits or pushes: pushing to main publishes the site.
+"""
+
+import argparse
+import re
+import shutil
+import sys
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+from urllib.parse import unquote
+
+BLOG_FOLDER = "Areas/Blog"
+ATTACHMENT_FOLDER = "Resources/Attachments"
+DEFAULT_VAULT = "~/Vaults/exocortex"
+
+# Passed through to Hugo. Anything else stops the run: Obsidian properties can
+# be private, and some mean something else to Hugo (`aliases` makes redirects).
+HUGO_KEYS = {"title", "author", "date", "tags", "series", "description"}
+# Used by this script and left out of the post.
+SCRIPT_KEYS = {"slug", "draft"}
+
+IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".avif"}
+
+FRONTMATTER = re.compile(r"\A---\n(.*?)^---[ \t]*(?:\n|\Z)", re.DOTALL | re.MULTILINE)
+SLUG = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\Z")
+DATE_WITH_TIME = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?")
+FENCE = re.compile(r" {0,3}(?:>\s*)*(`{3,}|~{3,})")
+CODE_SPAN_OR_COMMENT = re.compile(r"(?<!`)(`+)(?!`).+?(?<!`)\1(?!`)|%%")
+WIKILINK = re.compile(r"(!?)\[\[([^\]]+)\]\]")
+MARKDOWN_IMAGE = re.compile(r"!\[([^\]]*)\]\(([^)]+)\)")
+MARKDOWN_NOTE_LINK = re.compile(r"(?<!!)\[[^\]]*\]\(([^)\s]+\.md(?:#[^)\s]*)?)\)")
+CALLOUT = re.compile(r"\s*(?:>\s*)+\[!")
+HIGHLIGHT = re.compile(r"==[^=\s][^=]*==")
+
+
+@dataclass
+class Note:
+    path: Path
+    fields: dict[str, list[str]]
+    body: str
+    body_start_line: int
+    images: dict[Path, str] = field(default_factory=dict)
+
+    def value(self, key: str) -> str:
+        """Return a single-line property, without quotes."""
+        lines = self.fields.get(key)
+        if not lines:
+            return ""
+        return lines[0].split(":", 1)[1].strip().strip("\"'")
+
+    @property
+    def is_published(self) -> bool:
+        # Only an explicit `draft: false` publishes.
+        return self.value("draft").lower() == "false"
+
+    @property
+    def slug(self) -> str:
+        return self.value("slug")
+
+
+def parse_note(path: Path) -> Note | None:
+    """Parse a note, returning None if it has no frontmatter."""
+    text = path.read_text(encoding="utf-8")
+    match = FRONTMATTER.match(text)
+    if not match:
+        return None
+
+    fields: dict[str, list[str]] = {}
+    key = None
+    for line in match[1].splitlines():
+        top_level = re.match(r"([^\s:#-][^:]*):", line)
+        if top_level:
+            key = top_level[1]
+            fields[key] = [line]
+        elif key:
+            fields[key].append(line)
+
+    start_line = text[: match.end()].count("\n") + 1
+    return Note(path, fields, text[match.end() :], start_line)
+
+
+def split_line(line: str, in_comment: bool) -> tuple[list[tuple[bool, str]], bool]:
+    """Split a line into (is_code, text) parts, dropping %% comments."""
+    parts: list[tuple[bool, str]] = []
+    position = 0
+    while position < len(line):
+        if in_comment:
+            end = line.find("%%", position)
+            if end < 0:
+                return parts, True
+            position = end + 2
+            in_comment = False
+            continue
+        match = CODE_SPAN_OR_COMMENT.search(line, position)
+        if not match:
+            parts.append((False, line[position:]))
+            break
+        parts.append((False, line[position : match.start()]))
+        if match[0] == "%%":
+            in_comment = True
+        else:
+            parts.append((True, match[0]))
+        position = match.end()
+    return parts, in_comment
+
+
+class Converter:
+    """Turns one note's body into Hugo markdown, collecting problems."""
+
+    def __init__(self, note: Note, notes_by_name: dict[str, Note], attachments, problems):
+        self.note = note
+        self.notes_by_name = notes_by_name
+        self.attachments = attachments
+        self.problems = problems
+        self.line_number = note.body_start_line
+
+    def problem(self, message: str) -> None:
+        self.problems.append(f"{self.note.path.name}:{self.line_number}: {message}")
+
+    def convert(self) -> str:
+        output = []
+        fence = None
+        in_comment = False
+        for offset, line in enumerate(self.note.body.split("\n")):
+            self.line_number = self.note.body_start_line + offset
+
+            if fence:
+                closing = FENCE.match(line)
+                if closing and closing[1].startswith(fence) and not line[closing.end() :].strip():
+                    fence = None
+                output.append(line)
+                continue
+
+            opening = None if in_comment else FENCE.match(line)
+            if opening:
+                fence = opening[1]
+                output.append(line)
+                continue
+
+            parts, in_comment = split_line(line, in_comment)
+            if parts and not parts[0][0] and CALLOUT.match(parts[0][1]):
+                self.problem(f"callout has no Hugo equivalent: {line.strip()}")
+            converted = "".join(
+                text if is_code else self.convert_prose(text) for is_code, text in parts
+            )
+            # A line that held only a comment disappears entirely.
+            if converted.strip() or not line.strip():
+                output.append(converted)
+
+        if in_comment:
+            self.problem("%% comment is never closed")
+        return "\n".join(output)
+
+    def convert_prose(self, text: str) -> str:
+        for match in MARKDOWN_NOTE_LINK.finditer(text):
+            self.problem(f"link to a vault note: {match[0]}")
+        for match in HIGHLIGHT.finditer(text):
+            self.problem(f"highlight has no Hugo equivalent: {match[0]}")
+        text = MARKDOWN_IMAGE.sub(self.convert_markdown_image, text)
+        return WIKILINK.sub(self.convert_wikilink, text)
+
+    def convert_wikilink(self, match: re.Match) -> str:
+        is_embed = bool(match[1])
+        target, _, label = match[2].replace("\\|", "|").partition("|")
+        target = target.strip()
+        label = label.strip()
+
+        if is_embed and Path(target).suffix.lower() in IMAGE_SUFFIXES:
+            # Obsidian uses a bare number as the display width, which plain
+            # markdown can't express.
+            if label.replace("x", "").isdigit():
+                print(f"note: {self.note.path.name}:{self.line_number}: ignored image size in {match[0]}")
+                label = ""
+            return self.image(target, label, match[0])
+
+        if is_embed:
+            self.problem(f"embed can't be published: {match[0]}")
+            return match[0]
+        if "#" in target:
+            self.problem(f"heading and block links aren't supported: {match[0]}")
+            return match[0]
+
+        name = target.rsplit("/", 1)[-1].removesuffix(".md").lower()
+        linked = self.notes_by_name.get(name)
+        if not linked or not linked.is_published:
+            self.problem(f"link to a note that isn't a published post: {match[0]}")
+            return match[0]
+        return f"[{label or target.rsplit('/', 1)[-1]}](/posts/{linked.slug}/)"
+
+    def convert_markdown_image(self, match: re.Match) -> str:
+        target = match[2].strip().split(" ", 1)[0]
+        if re.match(r"https?://|/", target):
+            return match[0]
+        return self.image(unquote(target), match[1], match[0])
+
+    def image(self, target: str, alt: str, original: str) -> str:
+        source = self.find_attachment(target, original)
+        if source is None:
+            return original
+        stem = re.sub(r"[^a-z0-9]+", "-", source.stem.lower()).strip("-") or "image"
+        name = stem + source.suffix.lower()
+        if name in self.note.images.values() and self.note.images.get(source) != name:
+            self.problem(f"two images would both be named {name}: {original}")
+        self.note.images[source] = name
+        return f"![{alt}](/images/posts/{self.note.slug}/{name})"
+
+    def find_attachment(self, target: str, original: str) -> Path | None:
+        name = target.split("#", 1)[0].rsplit("/", 1)[-1]
+        matches = self.attachments.get(name.lower(), [])
+        preferred = [path for path in matches if ATTACHMENT_FOLDER in path.as_posix()]
+        matches = preferred or matches
+        if len(matches) == 1:
+            return matches[0]
+        if matches:
+            self.problem(f"more than one file has this name: {original}")
+        else:
+            self.problem(f"image not found in the vault: {original}")
+        return None
+
+
+def index_attachments(vault: Path) -> dict[str, list[Path]]:
+    """Map lowercased image file names to their paths, as Obsidian resolves them."""
+    attachments: dict[str, list[Path]] = {}
+    for path in vault.rglob("*"):
+        hidden = any(part.startswith(".") for part in path.relative_to(vault).parts)
+        if not hidden and path.suffix.lower() in IMAGE_SUFFIXES and path.is_file():
+            attachments.setdefault(path.name.lower(), []).append(path)
+    return attachments
+
+
+def check_frontmatter(note: Note, slugs: dict[str, Path], problems: list[str]) -> None:
+    name = note.path.name
+    if not note.value("title"):
+        problems.append(f"{name}: title is required")
+    if not SLUG.match(note.slug):
+        problems.append(f"{name}: slug must be lowercase words joined by hyphens, got {note.slug!r}")
+    elif note.slug in slugs:
+        problems.append(f"{name}: slug {note.slug!r} is also used by {slugs[note.slug].name}")
+    slugs.setdefault(note.slug, note.path)
+
+    date = note.value("date")
+    if date and not DATE_WITH_TIME.match(date):
+        problems.append(f"{name}: date needs a time, or leave it blank, got {date!r}")
+
+    for key in sorted(note.fields.keys() - HUGO_KEYS - SCRIPT_KEYS):
+        problems.append(f"{name}: property {key!r} isn't allowed in a post")
+
+
+def render(note: Note, body: str, date: str) -> str:
+    lines = ["---"]
+    for key, field_lines in note.fields.items():
+        if key == "date":
+            lines.append(f"date: {date}")
+        elif key not in SCRIPT_KEYS:
+            lines.extend(field_lines)
+    if "date" not in note.fields:
+        lines.append(f"date: {date}")
+    lines.append("---")
+    return "\n".join(lines) + "\n" + body
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Copy finished posts from the Obsidian vault into this site.")
+    parser.add_argument("--check", action="store_true", help="report problems without writing anything")
+    parser.add_argument("--vault", type=Path, default=Path(DEFAULT_VAULT).expanduser(), help="path to the vault")
+    parser.add_argument("--site", type=Path, default=Path(__file__).resolve().parent.parent, help="path to the Hugo site")
+    args = parser.parse_args()
+
+    blog = args.vault / BLOG_FOLDER
+    if not blog.is_dir():
+        print(f"error: {blog} doesn't exist", file=sys.stderr)
+        return 1
+
+    notes = [note for path in sorted(blog.rglob("*.md")) if (note := parse_note(path))]
+    published = [note for note in notes if note.is_published]
+    notes_by_name = {note.path.stem.lower(): note for note in notes}
+    attachments = index_attachments(args.vault)
+    posts = args.site / "content/posts"
+
+    # Every note is checked first, so a problem never leaves a half-finished run.
+    problems: list[str] = []
+    slugs: dict[str, Path] = {}
+    outputs: list[tuple[Note, str]] = []
+    now = datetime.now().astimezone().isoformat(timespec="seconds")
+    for note in published:
+        check_frontmatter(note, slugs, problems)
+        body = Converter(note, notes_by_name, attachments, problems).convert()
+
+        # Blank means "the first time this was published", so keep that date.
+        date = note.value("date")
+        current = posts / f"{note.slug}.md"
+        if not date and current.is_file() and (existing := parse_note(current)):
+            date = existing.value("date")
+        outputs.append((note, render(note, body, date or now)))
+
+    if problems:
+        print(f"Nothing was written. Fix {len(problems)} problem(s):", file=sys.stderr)
+        for problem in problems:
+            print(f"  {problem}", file=sys.stderr)
+        return 1
+
+    for note, content in outputs:
+        target = posts / f"{note.slug}.md"
+        changed = not target.is_file() or target.read_text(encoding="utf-8") != content
+        print(f"{'updated  ' if changed else 'unchanged'} {note.slug} ({len(note.images)} images)")
+        if args.check:
+            continue
+        target.write_text(content, encoding="utf-8")
+        images = args.site / "static/images/posts" / note.slug
+        shutil.rmtree(images, ignore_errors=True)
+        if note.images:
+            images.mkdir(parents=True)
+            for source, name in note.images.items():
+                shutil.copy2(source, images / name)
+
+    print(f"skipped   {len(notes) - len(published)} draft(s)")
+
+    # Removing a post is left to a person, since it changes the live site.
+    expected = {f"{note.slug}.md" for note in published} | {"_index.md"}
+    for path in sorted(posts.glob("*.md")):
+        if path.name not in expected:
+            print(f"warning: {path.name} has no published note. Delete it to take it off the site.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

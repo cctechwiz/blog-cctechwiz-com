@@ -4,6 +4,11 @@ Hugo blog using the Risotto theme, hosted on Cloudflare Pages.
 
 Read `README.md` when adding posts, tags, or series, or updating the theme or Hugo. Read `COMMENTS.md` before any work on comments, which are intentionally removed.
 
+## Posts
+
+- Posts live in the Obsidian vault at `~/Vaults/exocortex/Areas/Blog/`. `scripts/publish-from-vault` generates `content/posts/` and `static/images/posts/` from them, so make post edits in the vault.
+- The repo is public, so drafts stay in the vault.
+
 ## Deploying
 
 - Pushing to `main` publishes to production. Any other branch gets a preview at `https://<branch>.blog-cctechwiz-com.pages.dev`.
