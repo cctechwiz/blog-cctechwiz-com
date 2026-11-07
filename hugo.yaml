@@ -13,9 +13,6 @@ markup:
     noClasses: false
 
 params:
-  analytics:
-    cloudflareToken: "1b7d38ace2294b6090c7cb2dc6f93d9a"
-
   theme:
     palette: "everforest"
 

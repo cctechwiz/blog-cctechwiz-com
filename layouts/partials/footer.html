@@ -1,3 +1,2 @@
 <p class="copyright">{{ replace .Site.Copyright "{year}" (now.Format "2006") | markdownify }}</p>
 <p class="advertisement">Powered by <a href="https://gohugo.io/">hugo</a> and <a href="https://github.com/joeroe/risotto">risotto</a>.</p>
-{{ if .Site.Params.analytics.cloudflareToken }}<p class="analytics">Visits are counted with <a href="https://www.cloudflare.com/web-analytics/">Cloudflare Web Analytics</a>, which uses no cookies and collects no personal data.</p>{{ end }}
