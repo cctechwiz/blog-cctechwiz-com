@@ -43,5 +43,5 @@ Read `README.md` when adding posts, tags, or series, or updating the theme or Hu
 - `content/posts/_index.md` has `aliases` that notes can't set, so `hub_lines` in the script adds them if a `Posts/_hub.md` replaces that file.
 - Keys in `data/backlinks.json` are Hugo's `.Path` without the leading slash. `layouts/partials/backlinks.html` skips any that `site.GetPage` can't resolve, such as future-dated posts.
 - The CSP in `static/_headers` blocks inline styles. That's why `markup.highlight.noClasses` is false and `layouts/_default/_markup/render-table.html` exists. Previews load CSS from production, so `style-src` must keep `https://blog.cctechwiz.com`. `scripts/publish-from-vault` reads and updates `img-src`, so keep that directive on the `Content-Security-Policy` line.
-- Give post dates a time. A date alone means midnight UTC, which feed readers in US time zones show as the previous day.
+- Give post dates a time. A date alone means midnight UTC, which feed readers in US time zones show as the previous day. Obsidian's Date & time picker writes `2026-11-07T22:30`, which Hugo silently drops because it has no seconds, so `scripts/publish-from-vault` adds seconds and the local offset.
 

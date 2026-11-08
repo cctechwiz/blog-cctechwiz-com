@@ -143,7 +143,7 @@ class SectionsTest(unittest.TestCase):
     def use(self, name="Neovim", slug="neovim", body="", draft="false"):
         self.note(f"Uses/{name}.md", f"title: {name}\nslug: {slug}\ndraft: {draft}", body)
 
-    def book(self, properties="status: reading", name="Dune", author="Frank Herbert"):
+    def book(self, properties="status: book--reading", name="Dune", author="Frank Herbert"):
         self.note(f"Books/{name}.md", f"title: {name}\nslug: {name.lower().replace(' ', '-')}\nauthor: {author}\ndraft: false\n{properties}")
 
     def run_script(self, *flags):
@@ -207,6 +207,20 @@ class SectionsTest(unittest.TestCase):
                 self.assert_stopped(message)
                 for path in self.blog.rglob("*.md"):
                     path.unlink()
+
+    def test_picker_dates_get_seconds_and_an_offset(self):
+        self.note("Posts/Post.md", "title: Post\nslug: post\ndraft: false\ndate: 2026-11-07T22:30")
+        self.assert_ok()
+        self.assertRegex(self.page("posts/post.md"), r"\ndate: 2026-11-07T22:30:00[+-]\d{2}:\d{2}\n")
+
+    def test_dates_with_an_offset_are_kept(self):
+        self.note("Posts/Post.md", "title: Post\nslug: post\ndraft: false\ndate: 2026-11-07T22:30:00-07:00")
+        self.assert_ok()
+        self.assertIn("\ndate: 2026-11-07T22:30:00-07:00\n", self.page("posts/post.md"))
+
+    def test_impossible_dates_stop_the_run(self):
+        self.note("Posts/Post.md", "title: Post\nslug: post\ndraft: false\ndate: 2026-02-30T12:00")
+        self.assert_stopped("date needs a time")
 
     def test_undated_pages_get_lastmod_but_no_date(self):
         self.use(body="One.")
@@ -329,7 +343,7 @@ class SectionsTest(unittest.TestCase):
         self.assertFalse((self.site / "data").exists())
 
     def test_book_sort_properties(self):
-        self.book("status: finished\ndateRead: '2026-01-02'\nrating: 5", "The Left Hand", "Ursula K. Le Guin")
+        self.book("status: book--finished\ndateRead: '2026-01-02'\nrating: 5", "The Left Hand", "Ursula K. Le Guin")
         self.assert_ok()
         page = self.page("books/the-left-hand.md")
         self.assertIn('titleSort: "left hand"', page)
@@ -337,7 +351,7 @@ class SectionsTest(unittest.TestCase):
         self.assertIn("dateRead: 2026-01-02\n", page)
 
     def test_author_sort_overrides_the_default_once(self):
-        self.book("status: reading\nauthorSort: Le Guin", "A Book", "Ursula K. Le Guin")
+        self.book("status: book--reading\nauthorSort: Le Guin", "A Book", "Ursula K. Le Guin")
         self.assert_ok()
         page = self.page("books/a-book.md")
         self.assertEqual(page.count("authorSort:"), 1)
@@ -345,47 +359,99 @@ class SectionsTest(unittest.TestCase):
         self.assertIn('titleSort: "book"', page)
 
     def test_generated_properties_do_not_bump_lastmod(self):
-        self.book("status: reading\nauthorSort: Herbert")
+        self.book("status: book--reading\nauthorSort: Herbert")
         self.assert_ok()
         self.assert_ok()
         self.assertNotIn("lastmod:", self.page("books/dune.md"))
 
     def test_blank_template_properties_count_as_unset(self):
-        self.book("status: reading\ndateRead:\nrating:\nauthorSort:")
+        self.book("status: book--reading\ndateRead:\nrating:\nauthorSort:")
         self.assert_ok()
         self.assertIn('authorSort: "herbert"', self.page("books/dune.md"))
 
     def test_book_rules(self):
         for properties, message in (
             ("rating: 3", "status must be one of"),
-            ("status: abandoned", "status must be one of"),
-            ("status: finished", "dateRead is required"),
-            ("status: reading\ndateRead: 2026-01-02", "dateRead is only allowed"),
-            ("status: did-not-finish\ndateRead: 2026-01-02", "dateRead is only allowed"),
-            ("status: finished\ndateRead: 2026-02-30", "dateRead must be a date"),
-            ("status: finished\ndateRead: 2026-01-02T12:00:00", "dateRead must be a date"),
-            ("status: finished\ndateRead: 2026-01-02\nrating: 4.5", "rating must be a whole number"),
-            ("status: finished\ndateRead: 2026-01-02\nrating: 0", "rating must be a whole number"),
-            ("status: finished\ndateRead: 2026-01-02\nrating: 6", "rating must be a whole number"),
-            ("status: finished\ndateRead: 2026-01-02\nrating:\n  - 4", "rating must be a single value"),
-            ("status: reading\nrating: 4", "rating is only allowed"),
-            ("status: to-be-read\nrating: 4", "rating is only allowed"),
+            ("status: book--abandoned", "status must be one of"),
+            ("status: book--finished", "dateRead is required"),
+            ("status: book--reading\ndateRead: 2026-01-02", "dateRead is only allowed"),
+            ("status: book--did-not-finish\ndateRead: 2026-01-02", "dateRead is only allowed"),
+            ("status: book--finished\ndateRead: 2026-02-30", "dateRead must be a date"),
+            ("status: book--finished\ndateRead: January 2, 2026", "dateRead must be a date"),
+            ("status: book--finished\ndateRead: 2026-01-02\nrating: 4.5", "rating must be a whole number"),
+            ("status: book--finished\ndateRead: 2026-01-02\nrating: 0", "rating must be a whole number"),
+            ("status: book--finished\ndateRead: 2026-01-02\nrating: 6", "rating must be a whole number"),
+            ("status: book--finished\ndateRead: 2026-01-02\nrating:\n  - 4", "rating must be a single value"),
+            ("status:\n  - book--to-be-read\n  - book--reading\n  - book--finished\n  - book--did-not-finish", "Delete all but one"),
+            ("status:\n  - book--abandoned", "status must be one of"),
+            ("status: book--reading\nauthor:\n  - A\n  - B", "author must be a single value"),
+            ("status: book--reading\nrating: 4", "rating is only allowed"),
+            ("status: book--to-be-read\nrating: 4", "rating is only allowed"),
         ):
             with self.subTest(properties):
                 self.book(properties)
                 self.assert_stopped(message)
 
+    def test_status_can_be_a_one_item_list(self):
+        self.book("status:\n  - book--reading")
+        self.assert_ok()
+        self.assertIn("status: reading\n", self.page("books/dune.md"))
+        self.assertNotIn("book--", self.page("books/dune.md"))
+        self.assert_ok()
+        self.assertNotIn("lastmod:", self.page("books/dune.md"))
+
+    def test_status_needs_the_prefix(self):
+        self.book("status: reading")
+        self.assert_stopped("status must be one of book--did-not-finish")
+
+    def test_author_links_publish_as_text(self):
+        for author, expected in (
+            ('"[[Brandon Sanderson]]"', 'author: "Brandon Sanderson"'),
+            ('"[[People/B. Sanderson|Brandon Sanderson]]"', 'author: "Brandon Sanderson"'),
+            ("Brandon Sanderson", 'author: "Brandon Sanderson"'),
+        ):
+            with self.subTest(author):
+                self.book("status: book--reading", author=author)
+                self.assert_ok()
+                page = self.page("books/dune.md")
+                self.assertIn(expected, page)
+                self.assertIn('authorSort: "sanderson"', page)
+                self.assertNotIn("[[", page)
+
+    def test_author_link_does_not_bump_lastmod(self):
+        self.book("status: book--reading", author="Brandon Sanderson")
+        self.assert_ok()
+        self.book("status: book--reading", author='"[[Brandon Sanderson]]"')
+        self.assert_ok()
+        self.assertNotIn("lastmod:", self.page("books/dune.md"))
+
+    def test_links_in_other_properties_stop_the_run(self):
+        for write in (
+            lambda: self.post(extra='\ndescription: "About [[Secret Note]]"'),
+            lambda: self.note("Uses/_hub.md", 'title: Uses\ndescription: "[[Secret]]"\ndraft: false'),
+            lambda: self.book('status: book--reading\ndescription: "[[Secret]]"'),
+        ):
+            write()
+            self.assert_stopped("links aren't allowed in properties")
+            for path in self.blog.rglob("*.md"):
+                path.unlink()
+
+    def test_date_read_can_have_a_time(self):
+        self.book("status: book--finished\ndateRead: 2026-01-02T21:15")
+        self.assert_ok()
+        self.assertIn("dateRead: 2026-01-02\n", self.page("books/dune.md"))
+
     def test_book_needs_an_author(self):
-        self.note("Books/Dune.md", "title: Dune\nslug: dune\ndraft: false\nstatus: reading")
+        self.note("Books/Dune.md", "title: Dune\nslug: dune\ndraft: false\nstatus: book--reading")
         self.assert_stopped("author is required")
 
     def test_valid_book_statuses(self):
         for properties in (
-            "status: to-be-read",
-            "status: reading",
-            "status: finished\ndateRead: 2026-01-02\nrating: 1",
-            "status: did-not-finish\nrating: 2",
-            "status: did-not-finish",
+            "status: book--to-be-read",
+            "status: book--reading",
+            "status: book--finished\ndateRead: 2026-01-02\nrating: 1",
+            "status: book--did-not-finish\nrating: 2",
+            "status: book--did-not-finish",
         ):
             with self.subTest(properties):
                 self.book(properties)
@@ -411,7 +477,7 @@ class SectionsTest(unittest.TestCase):
 
     def test_prune_leaves_indexes_and_subsections(self):
         self.book()
-        self.book("status: reading", "Stale")
+        self.book("status: book--reading", "Stale")
         self.assert_ok()
         (self.blog / "Books/Stale.md").unlink()
         (self.site / "content/books/by-title").mkdir()

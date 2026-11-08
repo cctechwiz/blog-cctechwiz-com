@@ -18,7 +18,7 @@ Posts are written in Obsidian and copied here by a script. The vault is the sour
 1. In Obsidian, run `QuickAdd: New Blog Post` from the command palette and enter the title. This creates the note in `Areas/Blog/Posts/` from the `Blog Post` template.
 2. Check `slug`, which QuickAdd generates from the title. It becomes the URL (`/posts/my-post-title/`) and stays put if you rename the note.
 3. Write the post. Put `<!--more-->` on its own line where the summary on the posts page should end.
-4. Set `draft: false` when it's ready. Leave `date` blank to use the time of the first publish, or set it with a time.
+4. Set `draft: false` when it's ready. Leave `date` blank to use the time of the first publish, or pick one. `date` and `dateRead` are Date & time properties in the vault. The script adds the seconds and time zone Hugo needs.
 5. Copy it into this repo by running `QuickAdd: Publish Blog` in Obsidian, or from a terminal:
 
    ```sh
@@ -47,7 +47,7 @@ Drafts stay in the vault, because this repo is public. Only notes with `draft: f
 
 Code blocks and inline code are left alone. Images are copied unchanged, so resize large ones first.
 
-Anything else that wouldn't render stops the run before anything is written: links to notes outside `Areas/Blog/`, links to headings, note embeds, images that can't be found, reference-style images, remote images the CSP doesn't allow, shortcodes other than `details`, `highlight`, `param`, `ref`, and `relref`, callouts, highlights, published notes outside a section folder, two notes with the same name, and properties a section doesn't allow. Posts allow `title`, `date`, `tags`, `series`, and `description`, besides `slug` and `draft`.
+Anything else that wouldn't render stops the run before anything is written: links to notes outside `Areas/Blog/`, links to headings, note embeds, images that can't be found, reference-style images, remote images the CSP doesn't allow, shortcodes other than `details`, `highlight`, `param`, `ref`, and `relref`, callouts, highlights, links in properties other than a book's `author`, published notes outside a section folder, two notes with the same name, and properties a section doesn't allow. Posts allow `title`, `date`, `tags`, `series`, and `description`, besides `slug` and `draft`.
 
 ### Dates
 
@@ -141,11 +141,11 @@ Every book gets its own page, even a thin one, so backlinks have somewhere to la
 | Property | Rules |
 |---|---|
 | `title` | Required |
-| `author` | Required. The author of the book, as a single value |
+| `author` | Required. The author of the book, as a single value. A link like `[[Brandon Sanderson]]` publishes as plain text |
 | `authorSort` | Optional. Overrides the default sort name, which is the last word of `author` |
-| `status` | Required: `to-be-read`, `reading`, `finished`, or `did-not-finish` |
-| `dateRead` | Like `2026-11-06`. Required when `status` is `finished`, and not allowed otherwise |
-| `rating` | Optional. A whole number of stars from 1 to 5, only on `finished` and `did-not-finish` |
+| `status` | Required: `book--to-be-read`, `book--reading`, `book--finished`, or `book--did-not-finish`. `Status` is a List property in the vault, and the `Book` template lists all four so the picker offers them. Delete all but one before publishing. The prefix makes book statuses easy to filter, and the script drops it, so the site sees `reading` |
+| `dateRead` | Like `2026-11-06`. A time from the Date & time picker is dropped. Required when `status` is `book--finished`, and not allowed otherwise |
+| `rating` | Optional. A whole number of stars from 1 to 5, only on `book--finished` and `book--did-not-finish` |
 | `tags`, `description` | Optional |
 
 The CSP blocks JavaScript, so each sort order is its own page, linked by a row of tabs under the main menu:
