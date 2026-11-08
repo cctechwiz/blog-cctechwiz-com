@@ -94,6 +94,13 @@ QuickAdd choices don't sync, because Obsidian Sync's community plugin settings a
 | Open | On |
 | ⚡ | On |
 
+`New Uses Page` and `New Book` use the same settings, with these differences:
+
+| Choice | Template Path | Create in folder |
+|---|---|---|
+| `New Uses Page` | `Resources/Templates/Uses Page.md` | `Areas/Blog/Uses` |
+| `New Book` | `Resources/Templates/Book.md` | `Areas/Blog/Books` |
+
 The template's `{{VALUE:...}}` placeholders only work through QuickAdd, not the core Templates plugin.
 
 Run `git pull` on the Mac before publishing from there. Otherwise, a post with a blank `date` gets a new date and conflicts with the phone's commit.

@@ -1,3 +1,4 @@
 ---
-title: "Books"
+title: Books
+description: "What I'm reading"
 ---
