@@ -1,6 +1,6 @@
 ---
 title: "Threat Modeling: Designing for Security"
-author: Adam Shostack
+author: "Adam Shostack"
 authorSort: "shostack"
 status: reading
 dateRead:
